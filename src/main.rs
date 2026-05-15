@@ -12,15 +12,15 @@ use clap::Parser;
 #[command(name = "cronx", version, about)]
 struct Cli {
     /// Wrap a command, run it, and update job state.
-    #[arg(long, value_name = "COMMAND", conflicts_with_all = ["catch_up", "setup"])]
+    #[arg(long, value_name = "COMMAND", conflicts_with_all = ["catch_up", "setup", "takedown"])]
     run: Option<String>,
 
     /// Slug identifying the job; required with --run.
-    #[arg(long, value_name = "SLUG", conflicts_with_all = ["catch_up", "setup"])]
+    #[arg(long, value_name = "SLUG", conflicts_with_all = ["catch_up", "setup", "takedown"])]
     slug: Option<String>,
 
     /// Scan crontab and re-run any managed jobs that missed a scheduled fire.
-    #[arg(long, conflicts_with = "setup")]
+    #[arg(long, conflicts_with_all = ["setup", "takedown"])]
     catch_up: bool,
 
     /// With --catch-up: report what would run without executing or baselining.
@@ -28,8 +28,12 @@ struct Cli {
     dry_run: bool,
 
     /// Install the catch-up runner into the user's crontab.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "takedown")]
     setup: bool,
+
+    /// Remove the catch-up runner from the user's crontab (undoes --setup).
+    #[arg(long)]
+    takedown: bool,
 }
 
 fn main() -> Result<()> {
@@ -37,6 +41,10 @@ fn main() -> Result<()> {
 
     if cli.setup {
         return setup::run_setup();
+    }
+
+    if cli.takedown {
+        return setup::run_takedown();
     }
 
     if cli.catch_up {
@@ -52,7 +60,7 @@ fn main() -> Result<()> {
         (None, Some(_)) => anyhow::bail!("--slug requires --run"),
         (None, None) => {
             anyhow::bail!(
-                "nothing to do — pass --run \"<command>\" --slug \"<slug>\", --catch-up, or --setup"
+                "nothing to do — pass --run \"<command>\" --slug \"<slug>\", --catch-up, --setup, or --takedown"
             )
         }
     }

@@ -48,6 +48,15 @@ state file:
 Regular cron lines that *don't* use `cronx --run` are ignored — only opted-in
 jobs are managed.
 
+To remove the catch-up runner from your crontab:
+
+```
+cronx --takedown
+```
+
+This is the inverse of `--setup` — also idempotent. Any `--run` wrapper lines
+you added are left alone; remove those yourself if you want a full uninstall.
+
 ## State file
 
 State lives at `~/Library/Application Support/cronx/jobs-state.json`, one
