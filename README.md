@@ -24,7 +24,14 @@ This puts `cronx` on your `PATH` (typically `~/.cargo/bin`).
 
 ## Crontab setup
 
-Two patterns. First, schedule the catch-up runner every minute:
+Install the catch-up runner into your crontab (idempotent — re-running is a
+no-op):
+
+```
+cronx --setup
+```
+
+This appends a line like:
 
 ```
 * * * * * /Users/you/.cargo/bin/cronx --catch-up

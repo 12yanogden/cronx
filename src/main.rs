@@ -2,6 +2,7 @@ mod catchup;
 mod crontab;
 mod runner;
 mod schedule;
+mod setup;
 mod state;
 
 use anyhow::Result;
@@ -11,24 +12,32 @@ use clap::Parser;
 #[command(name = "cronx", version, about)]
 struct Cli {
     /// Wrap a command, run it, and update job state.
-    #[arg(long, value_name = "COMMAND", conflicts_with = "catch_up")]
+    #[arg(long, value_name = "COMMAND", conflicts_with_all = ["catch_up", "setup"])]
     run: Option<String>,
 
     /// Slug identifying the job; required with --run.
-    #[arg(long, value_name = "SLUG", conflicts_with = "catch_up")]
+    #[arg(long, value_name = "SLUG", conflicts_with_all = ["catch_up", "setup"])]
     slug: Option<String>,
 
     /// Scan crontab and re-run any managed jobs that missed a scheduled fire.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "setup")]
     catch_up: bool,
 
     /// With --catch-up: report what would run without executing or baselining.
     #[arg(long, requires = "catch_up")]
     dry_run: bool,
+
+    /// Install the catch-up runner into the user's crontab.
+    #[arg(long)]
+    setup: bool,
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+
+    if cli.setup {
+        return setup::run_setup();
+    }
 
     if cli.catch_up {
         return catchup::run_catch_up(cli.dry_run);
@@ -43,7 +52,7 @@ fn main() -> Result<()> {
         (None, Some(_)) => anyhow::bail!("--slug requires --run"),
         (None, None) => {
             anyhow::bail!(
-                "nothing to do — pass --run \"<command>\" --slug \"<slug>\", or --catch-up"
+                "nothing to do — pass --run \"<command>\" --slug \"<slug>\", --catch-up, or --setup"
             )
         }
     }
